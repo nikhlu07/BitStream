@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BitStream Pitch Deck</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/nikhlu07/BitStream/main/logo.svg" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* Replicating the design system from index.css */
+        :root {
+            --background: 0 0% 7%;
+            --foreground: 0 0% 98%;
+            --card: 0 0% 10%;
+            --card-foreground: 0 0% 98%;
+            --popover: 0 0% 10%;
+            --popover-foreground: 0 0% 98%;
+            --primary: 18 99% 54%;
+            --primary-light: 33 100% 56%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 0 0% 20%;
+            --secondary-foreground: 0 0% 98%;
+            --muted: 0 0% 15%;
+            --muted-foreground: 0 0% 60%;
+            --accent: 0 0% 15%;
+            --accent-foreground: 0 0% 98%;
+            --destructive: 0 84% 60%;
+            --destructive-foreground: 0 0% 100%;
+            --success: 142 71% 45%;
+            --success-foreground: 0 0% 100%;
+            --border: 0 0% 20%;
+            --input: 0 0% 20%;
+            --ring: 18 99% 54%;
+            --radius: 0.75rem;
+
+            --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
+            --gradient-primary-hover: linear-gradient(135deg, hsl(18 99% 60%), hsl(33 100% 62%));
+            --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .slide {
+            min-height: 100vh;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 2rem;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            position: relative;
+        }
+
+        /* Micro-animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .animate-on-show {
+            opacity: 0;
+        }
+        .slide.active .animate-on-show {
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .slide.active .animate-scale-in {
+             animation: scaleIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+
+        .bg-gradient-primary {
+            background-image: var(--gradient-primary);
+        }
+
+        .text-gradient {
+            background-image: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+
+        .card {
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            height: 2.75rem;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        .btn-primary {
+            background-image: var(--gradient-primary);
+            color: hsl(var(--primary-foreground));
+        }
+
+        .btn-primary:hover {
+            background-image: var(--gradient-primary-hover);
+            box-shadow: var(--shadow-elegant);
+            transform: scale(1.05);
+        }
+
+        .btn-outline {
+            border: 2px solid hsl(var(--primary));
+            background-color: transparent;
+            color: hsl(var(--foreground));
+        }
+        .btn-outline:hover {
+             background-color: hsl(var(--muted));
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 1.5rem;
+            z-index: 50;
+            background-color: hsl(var(--card) / 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid hsl(var(--border));
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+        }
+
+        .nav-button {
+             position: fixed;
+            bottom: 1.5rem;
+            z-index: 50;
+            background-color: hsl(var(--card) / 0.8);
+            border: 1px solid hsl(var(--border));
+            color: hsl(var(--foreground));
+            width: 2.75rem;
+            height: 2.75rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .nav-button:hover {
+            background-color: hsl(var(--muted));
+            border-color: hsl(var(--primary));
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+
+    <main id="pitch-deck" class="relative">
+        <!-- Slide 1: Title -->
+        <section class="slide active flex-col items-center justify-center text-center">
+            <div class="flex items-center gap-4 mb-4 animate-on-show" style="animation-delay: 0.1s;">
+                <img src="https://raw.githubusercontent.com/nikhlu07/BitStream/main/logo.svg" class="w-20 h-20" alt="BitStream Logo"/>
+                <h1 class="text-7xl font-black">Stream</h1>
+            </div>
+            <h2 class="text-4xl font-bold mb-4 text-gradient animate-on-show" style="animation-delay: 0.2s;">Bitcoin-Native Micropayment Streaming</h2>
+            <p class="text-2xl text-slate-400 max-w-4xl animate-on-show" style="animation-delay: 0.3s;">
+                Monetize exclusive content with instant, anonymous, and frictionless Bitcoin payments.
+            </p>
+        </section>
+
+        <!-- Slide 2: The Problem -->
+        <section class="slide flex-col items-center justify-center">
+            <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="animate-on-show">
+                    <h2 class="text-5xl font-bold mb-6">The <span class="text-gradient">Problem</span> with Content Monetization</h2>
+                    <p class="text-xl text-slate-400 mb-8">
+                        Traditional platforms are broken for exclusive content creators and their audiences who value privacy.
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card p-6 animate-on-show" style="animation-delay: 0.2s;">
+                        <h3 class="font-bold text-lg mb-2">High Fees & Slow Payouts</h3>
+                        <p class="text-sm text-slate-400">Creators lose revenue to processing fees and wait weeks for payouts.</p>
+                    </div>
+                     <div class="card p-6 animate-on-show" style="animation-delay: 0.3s;">
+                        <h3 class="font-bold text-lg mb-2">Privacy Concerns</h3>
+                        <p class="text-sm text-slate-400">Viewers' identities and habits are tracked and exposed.</p>
+                    </div>
+                     <div class="card p-6 animate-on-show" style="animation-delay: 0.4s;">
+                        <h3 class="font-bold text-lg mb-2">Security Risks</h3>
+                        <p class="text-sm text-slate-400">Payment data is vulnerable to breaches, and creators' safety is compromised.</p>
+                    </div>
+                     <div class="card p-6 animate-on-show" style="animation-delay: 0.5s;">
+                        <h3 class="font-bold text-lg mb-2">Friction & Restrictions</h3>
+                        <p class="text-sm text-slate-400">Complex onboarding, geographic limitations, and no true pay-per-second models.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: The Solution -->
+        <section class="slide bg-gradient-to-br from-primary/10 via-background to-primary-light/10 flex-col items-center justify-center">
+            <div class="text-center max-w-4xl">
+                 <h2 class="text-5xl font-bold mb-6 animate-on-show">The <span class="text-gradient">Solution</span>: BitStream</h2>
+                 <p class="text-2xl text-slate-300 mb-12 animate-on-show" style="animation-delay: 0.1s;">
+                     A privacy-first, secure micropayment experience for exclusive content, powered by Bitcoin.
+                 </p>
+                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                     <div class="card p-6 animate-on-show" style="animation-delay: 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-orange-500 mb-3 mx-auto"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                         <h3 class="font-bold text-lg">Anonymous Viewing</h3>
+                         <p class="text-sm text-slate-400">Consume content without revealing your identity.</p>
+                     </div>
+                      <div class="card p-6 animate-on-show" style="animation-delay: 0.3s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-orange-500 mb-3 mx-auto"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+                         <h3 class="font-bold text-lg">Instant Payments</h3>
+                         <p class="text-sm text-slate-400">Creators receive sBTC in real-time as content is consumed.</p>
+                     </div>
+                      <div class="card p-6 animate-on-show" style="animation-delay: 0.4s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-orange-500 mb-3 mx-auto"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                         <h3 class="font-bold text-lg">Zero Crypto Complexity</h3>
+                         <p class="text-sm text-slate-400">Simple email/passkey signup. No seed phrases needed.</p>
+                     </div>
+                      <div class="card p-6 animate-on-show" style="animation-delay: 0.5s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-orange-500 mb-3 mx-auto"><circle cx="12" cy="12" r="10"/><path d="m12 8-2 4 2 4 2-4-2-4z"/></svg>
+                         <h3 class="font-bold text-lg">Pay-Per-Second</h3>
+                         <p class="text-sm text-slate-400">Users pay only for what they actually watch, down to the second.</p>
+                     </div>
+                 </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: Key Features - For Viewers -->
+        <section class="slide flex-col items-center justify-center">
+            <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="animate-on-show">
+                     <h2 class="text-5xl font-bold mb-6">For <span class="text-gradient">Viewers</span></h2>
+                     <p class="text-xl text-slate-400 mb-8">A seamless and private viewing experience.</p>
+                     <ul class="space-y-4">
+                        <li class="flex items-start gap-3 animate-on-show" style="animation-delay: 0.2s;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 flex-shrink-0 mt-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="text-lg"><strong>Anonymous Access:</strong> Watch without revealing your identity.</span></li>
+                        <li class="flex items-start gap-3 animate-on-show" style="animation-delay: 0.3s;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 flex-shrink-0 mt-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="text-lg"><strong>Instant Setup:</strong> Auto-generated wallet with pre-loaded testnet sBTC.</span></li>
+                        <li class="flex items-start gap-3 animate-on-show" style="animation-delay: 0.4s;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 flex-shrink-0 mt-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="text-lg"><strong>Frictionless Payments:</strong> Set-and-forget micropayments stream as you watch.</span></li>
+                        <li class="flex items-start gap-3 animate-on-show" style="animation-delay: 0.5s;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 flex-shrink-0 mt-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="text-lg"><strong>One-Click Tipping:</strong> Support your favorite creators instantly.</span></li>
+                     </ul>
+                </div>
+                <div class="card p-8 bg-gradient-to-br from-primary/10 to-primary-light/10 border-primary/20 animate-scale-in" style="animation-delay: 0.2s;">
+                     <img src="https://images.unsplash.com/photo-1642104704074-907c0698cbd9?w=800&h=450&fit=crop" alt="Content" class="rounded-lg mb-4"/>
+                     <h3 class="text-xl font-bold">Live Market Analysis - BTC & ETH</h3>
+                     <p class="text-sm text-slate-400 mb-4">by Sarah Chen</p>
+                     <div class="flex justify-between items-center">
+                         <span class="font-semibold text-gradient">0.0002 sBTC/min</span>
+                         <div class="flex items-center gap-1 text-slate-400 text-sm"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> 847 watching</div>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: Key Features - For Creators -->
+        <section class="slide bg-muted/30 flex-col items-center justify-center">
+            <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="card p-2 animate-scale-in" style="animation-delay: 0.2s;">
+                    <img src="dashboard.png" alt="Creator Dashboard" class="rounded-lg"/>
+                </div>
+                <div class="animate-on-show">
+                     <h2 class="text-5xl font-bold mb-6">For <span class="text-gradient">Creators</span></h2>
+                     <p class="text-xl text-slate-400 mb-8">The ultimate toolkit for private, secure monetization.</p>
+                     <ul class="space-y-4">
+                        <li class="flex items-start gap-3 animate-on-show" style="animation-delay: 0.3s;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 flex-shrink-0 mt-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="text-lg"><strong>Instant Payouts:</strong> Receive sBTC in real-time. No waiting periods.</span></li>
+                        <li class="flex items-start gap-3 animate-on-show" style="animation-delay: 0.4s;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 flex-shrink-0 mt-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="text-lg"><strong>Protected Identity:</strong> Create under a pseudonym without exposing personal payment details.</span></li>
+                        <li class="flex items-start gap-3 animate-on-show" style="animation-delay: 0.5s;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 flex-shrink-0 mt-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="text-lg"><strong>Flexible Rates:</strong> Configure your own per-minute or per-second pricing.</span></li>
+                        <li class="flex items-start gap-3 animate-on-show" style="animation-delay: 0.6s;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 flex-shrink-0 mt-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="text-lg"><strong>No Chargebacks:</strong> Bitcoin finality means payments are irreversible and secure.</span></li>
+                     </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 6: Technology Stack -->
+        <section class="slide flex-col items-center justify-center">
+            <div class="text-center max-w-4xl">
+                 <h2 class="text-5xl font-bold mb-6 animate-on-show">Powered by <span class="text-gradient">Cutting-Edge Tech</span></h2>
+                 <p class="text-xl text-slate-300 mb-12 animate-on-show" style="animation-delay: 0.1s;">
+                     Leveraging the best of Bitcoin Layer 2 and embedded wallet technology for a revolutionary UX.
+                 </p>
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                     <div class="card p-8 animate-on-show" style="animation-delay: 0.2s;">
+                        <img src="https://cdn.brandfetch.io/idQC41uclv/w/400/h/400/theme/dark/icon.png?c=1bxid64Mup7aczewSAYMX&t=1680705479671" class="h-12 mx-auto mb-4" alt="Stacks"/>
+                         <h3 class="font-bold text-lg text-center">sBTC on Stacks</h3>
+                         <p class="text-sm text-slate-400 text-center">Programmable Bitcoin Layer 2 for smart contract-automated micropayments.</p>
+                     </div>
+                     <div class="card p-8 animate-on-show" style="animation-delay: 0.3s;">
+                        <img src="https://cdn.brandfetch.io/idket2JB5M/w/300/h/300/theme/dark/icon.png?c=1bxid64Mup7aczewSAYMX&t=1754633336230" class="h-12 mx-auto mb-4" alt="Turnkey"/>
+                         <h3 class="font-bold text-lg text-center">Turnkey Embedded Wallets</h3>
+                         <p class="text-sm text-slate-400 text-center">Secure, non-custodial wallets created instantly with just an email or passkey.</p>
+                     </div>
+                     <div class="card p-8 animate-on-show" style="animation-delay: 0.4s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-orange-500 mb-4 mx-auto"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                         <h3 class="font-bold text-lg text-center">Clarity Smart Contracts</h3>
+                         <p class="text-sm text-slate-400 text-center">Decidable, secure contracts that automate payment streams and tipping.</p>
+                     </div>
+                 </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Roadmap -->
+        <section class="slide bg-muted/30 flex-col items-center justify-center">
+            <div class="max-w-6xl w-full">
+                <h2 class="text-5xl font-bold mb-12 text-center animate-on-show">Our <span class="text-gradient">Roadmap</span></h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="card p-8 animate-on-show" style="animation-delay: 0.2s;">
+                        <h3 class="text-2xl font-bold mb-4">Phase 1 (MVP)</h3>
+                        <ul class="space-y-3 list-disc list-inside text-slate-300">
+                            <li class="line-through text-slate-500">Turnkey Wallet Integration</li>
+                            <li class="line-through text-slate-500">Basic Streaming Contract</li>
+                            <li class="line-through text-slate-500">Creator & Consumer Dashboards</li>
+                            <li class="line-through text-slate-500">Testnet sBTC Integration</li>
+                        </ul>
+                    </div>
+                     <div class="card p-8 border-2 border-primary shadow-elegant animate-on-show" style="animation-delay: 0.3s;">
+                        <h3 class="text-2xl font-bold mb-4 text-gradient">Phase 2 (Now)</h3>
+                        <ul class="space-y-3 list-disc list-inside text-slate-300">
+                            <li>Mainnet Launch</li>
+                            <li>Mobile Responsive Optimization</li>
+                            <li>Advanced Creator Analytics</li>
+                            <li>Multi-tier Subscription Options</li>
+                        </ul>
+                    </div>
+                     <div class="card p-8 animate-on-show" style="animation-delay: 0.4s;">
+                        <h3 class="text-2xl font-bold mb-4">Phase 3 (Next)</h3>
+                        <ul class="space-y-3 list-disc list-inside text-slate-300">
+                            <li>Mobile Apps (iOS/Android)</li>
+                            <li>Creator NFT Badges</li>
+                            <li>Decentralized Content Storage (IPFS)</li>
+                            <li>Cross-chain Support</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 8: Call to Action -->
+        <section class="slide bg-gradient-primary flex-col items-center justify-center text-center">
+            <h2 class="text-6xl font-bold text-white mb-6 animate-scale-in">Join the Revolution</h2>
+            <p class="text-2xl text-white/90 mb-10 max-w-3xl animate-scale-in" style="animation-delay: 0.1s;">
+                Become part of the future of content monetization. Whether you're a creator or a viewer, BitStream is built for you.
+            </p>
+<!--             <div class="flex flex-col sm:flex-row gap-4 justify-center animate-scale-in" style="animation-delay: 0.2s;">-->
+<!--                <a href="#" class="btn bg-white text-black hover:bg-white/90">Start Earning</a>-->
+<!--                <a href="#" class="btn border-2 border-white bg-transparent text-white hover:bg-white/10">Explore Content</a>-->
+<!--            </div>-->
+        </section>
+    </main>
+
+    <!-- Navigation -->
+    <div id="slide-counter" class="slide-counter"></div>
+    <button id="prev-btn" class="nav-button right-20">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <button id="next-btn" class="nav-button right-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const counter = document.getElementById('slide-counter');
+            let currentSlide = 0;
+            const totalSlides = slides.length;
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.remove('active');
+                    if (i === index) {
+                        slide.classList.add('active');
+                    }
+                });
+                counter.textContent = `${index + 1} / ${totalSlides}`;
+            }
+
+            function nextSlide() {
+                currentSlide = (currentSlide + 1) % totalSlides;
+                showSlide(currentSlide);
+            }
+
+            function prevSlide() {
+                currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+                showSlide(currentSlide);
+            }
+
+            prevBtn.addEventListener('click', prevSlide);
+            nextBtn.addEventListener('click', nextSlide);
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                     e.preventDefault();
+                    prevSlide();
+                }
+            });
+
+            showSlide(currentSlide);
+        });
+    </script>
+</body>
+</html>
+
