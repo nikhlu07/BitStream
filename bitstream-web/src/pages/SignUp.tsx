@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,23 +7,28 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { Zap, Mail, User, CheckCircle2, Eye, Video, Wallet as WalletIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useWallet } from "@/contexts/WalletContext";
 
 export default function SignUp() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { createUserWallet, isLoading: walletLoading } = useWallet();
+  
   const [accountType, setAccountType] = useState<"creator" | "viewer">(
     (searchParams.get("type") as "creator" | "viewer") || "viewer"
   );
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  
+  const isLoading = isCreating || walletLoading;
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For viewers, only need to agree to terms
+    // Validate inputs based on account type
     if (accountType === "viewer") {
       if (!agreedToTerms) {
         toast({
@@ -45,46 +50,55 @@ export default function SignUp() {
       }
     }
 
-    setIsLoading(true);
+    setIsCreating(true);
     
-    // Simulate account creation
-    setTimeout(() => {
-      const walletAddress = "SP" + Math.random().toString(36).substring(2, 15).toUpperCase() + 
-                           Math.random().toString(36).substring(2, 15).toUpperCase();
+    try {
+      // Prepare user data based on account type
+      const userEmail = accountType === "viewer" 
+        ? `viewer_${Date.now()}@bitstream.local` // Anonymous email for viewers
+        : email;
       
-      const userData = accountType === "viewer" 
-        ? {
-            accountType,
-            walletAddress,
-            balance: 0.1,
-            username: `viewer_${walletAddress.substring(2, 8)}`, // Auto-generated username
-          }
-        : {
-            email,
-            username,
-            accountType,
-            walletAddress,
-            balance: 0.1,
-          };
+      const userUsername = accountType === "viewer"
+        ? `viewer_${Math.random().toString(36).substring(2, 8)}` // Auto-generated username
+        : username;
       
-      localStorage.setItem("bitstream_user", JSON.stringify(userData));
+      console.log('🚀 Creating wallet for:', userUsername);
       
-      toast({
-        title: "Welcome to BitStream!",
-        description: accountType === "viewer" 
-          ? "Your anonymous wallet has been created with 0.1 testnet sBTC"
-          : "Your account and wallet have been created with 0.1 testnet sBTC",
-      });
+      // Create wallet using Turnkey
+      const result = await createUserWallet(userEmail, userUsername);
       
-      setIsLoading(false);
-      
-      // Navigate based on account type
-      if (accountType === "creator") {
-        navigate("/dashboard");
+      if (result.success && result.data) {
+        const walletAddress = result.data.walletAddress;
+        toast({
+          title: "Welcome to BitStream!",
+          description: accountType === "viewer" 
+            ? `Your anonymous wallet has been created securely. Address: ${walletAddress}`
+            : "Your account and wallet have been created successfully",
+        });
+        
+        // Navigate based on account type
+        if (accountType === "creator") {
+          navigate("/dashboard");
+        } else {
+          navigate("/browse");
+        }
       } else {
-        navigate("/browse");
+        toast({
+          title: "Wallet creation failed",
+          description: result.error || "Please try again",
+          variant: "destructive",
+        });
       }
-    }, 2000);
+    } catch (error) {
+      console.error('Error during signup:', error);
+      toast({
+        title: "Something went wrong",
+        description: "Please try again or contact support",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (

@@ -37,6 +37,7 @@ export const mockContent = [
     creatorId: "2",
     creatorName: "Alex Martinez",
     creatorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
+    creatorAddress: "SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7",
     duration: "24:35",
     price: 0.00015,
     views: 12453,

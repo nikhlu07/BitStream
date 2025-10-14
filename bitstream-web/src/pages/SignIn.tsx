@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Zap, Mail, CheckCircle2, Wallet as WalletIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useWallet } from "@/contexts/WalletContext";
 
 export default function SignIn() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn } = useWallet();
   const [email, setEmail] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,48 +38,34 @@ export default function SignIn() {
       return;
     }
 
-    setIsLoading(true);
-    
-    // Simulate authentication
-    setTimeout(() => {
-      const storedUser = localStorage.getItem("bitstream_user");
-      
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-        
-        // Verify based on sign in type
-        const isValid = signInType === "creator" 
-          ? user.email === email 
-          : user.walletAddress === walletAddress;
-        
-        if (isValid && user.accountType === signInType) {
-          toast({
-            title: "Welcome back!",
-            description: signInType === "creator" ? `Signed in as ${user.username}` : "Wallet connected",
-          });
-          
-          if (user.accountType === "creator") {
-            navigate("/dashboard");
-          } else {
-            navigate("/browse");
-          }
-        } else {
-          toast({
-            title: "Authentication failed",
-            description: "Invalid credentials. Please check and try again.",
-            variant: "destructive",
-          });
-        }
+    try {
+      setIsLoading(true);
+      const result = await signIn(
+        signInType === "creator" ? { email } : { walletAddress }
+      );
+
+      if (result.success) {
+        toast({
+          title: "Welcome back!",
+          description: signInType === "creator" ? "Signed in with passkey" : "Wallet connected",
+        });
+        navigate(signInType === "creator" ? "/dashboard" : "/browse");
       } else {
         toast({
-          title: "Account not found",
-          description: "Please create an account first.",
+          title: "Authentication failed",
+          description: result.error || "Invalid credentials. Please try again.",
           variant: "destructive",
         });
       }
-      
+    } catch (err) {
+      toast({
+        title: "Authentication error",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (

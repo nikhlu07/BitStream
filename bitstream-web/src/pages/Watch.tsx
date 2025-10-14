@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,36 +14,106 @@ import {
   ThumbsUp,
   Share2,
   Heart,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from "lucide-react";
 import { mockContent } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
+import { useWallet } from "@/contexts/WalletContext";
 
 export default function Watch() {
   const { contentId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, balance, sendPaymentTransaction, refreshBalance } = useWallet();
+  
   const [isPlaying, setIsPlaying] = useState(false);
   const [watchTime, setWatchTime] = useState(0);
   const [amountStreamed, setAmountStreamed] = useState(0);
   const [tipAmount, setTipAmount] = useState("");
+  const [isSendingTip, setIsSendingTip] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  
+  const lastPaymentTime = useRef<number>(0);
+  const accumulatedAmount = useRef<number>(0);
 
   const content = mockContent.find(c => c.id === contentId);
   const relatedContent = mockContent.filter(c => c.id !== contentId).slice(0, 4);
 
+  // Streaming payment logic - accumulate and send every 30 seconds
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isPlaying) {
+    if (isPlaying && content) {
       interval = setInterval(() => {
         setWatchTime(prev => prev + 1);
-        // Simulate payment streaming (price per minute / 60 seconds)
-        if (content) {
-          setAmountStreamed(prev => prev + (content.price / 60));
+        
+        // Calculate payment per second
+        const paymentPerSecond = content.price / 60;
+        setAmountStreamed(prev => prev + paymentPerSecond);
+        accumulatedAmount.current += paymentPerSecond;
+        
+        // Send accumulated payment every 30 seconds
+        const now = Date.now();
+        if (now - lastPaymentTime.current >= 30000 && accumulatedAmount.current > 0) {
+          processStreamingPayment();
         }
       }, 1000);
     }
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      // Send final payment when stopping
+      if (accumulatedAmount.current > 0) {
+        processStreamingPayment();
+      }
+    };
   }, [isPlaying, content]);
+
+  const processStreamingPayment = async () => {
+    if (!content || !user || accumulatedAmount.current === 0 || isProcessingPayment) {
+      return;
+    }
+
+    const amountToSend = accumulatedAmount.current;
+    
+    // Check balance
+    if (balance < amountToSend) {
+      setIsPlaying(false);
+      toast({
+        title: "Insufficient balance",
+        description: "Please add more sBTC to continue watching",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessingPayment(true);
+    
+    try {
+      // Send payment to creator (using mock address for now)
+      const creatorAddress = content.creatorAddress || "SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7";
+      
+      const result = await sendPaymentTransaction(creatorAddress, amountToSend);
+      
+      if (result.success) {
+        console.log('✅ Streaming payment sent:', amountToSend, 'sBTC');
+        lastPaymentTime.current = Date.now();
+        accumulatedAmount.current = 0;
+      } else {
+        console.error('❌ Streaming payment failed:', result.error);
+        setIsPlaying(false);
+        toast({
+          title: "Payment failed",
+          description: "Unable to process streaming payment",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error processing streaming payment:', error);
+      setIsPlaying(false);
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -51,9 +121,18 @@ export default function Watch() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleTip = (amount: number) => {
-    const userData = JSON.parse(localStorage.getItem("bitstream_user") || "{}");
-    if (userData.balance < amount) {
+  const handleTip = async (amount: number) => {
+    if (!user) {
+      toast({
+        title: "Not signed in",
+        description: "Please sign in to send tips",
+        variant: "destructive",
+      });
+      navigate("/signin");
+      return;
+    }
+
+    if (balance < amount) {
       toast({
         title: "Insufficient balance",
         description: "Please add more sBTC to your wallet",
@@ -62,15 +141,53 @@ export default function Watch() {
       return;
     }
 
-    userData.balance -= amount;
-    localStorage.setItem("bitstream_user", JSON.stringify(userData));
-    
-    toast({
-      title: "Tip sent! 🎉",
-      description: `You tipped ${amount} sBTC to ${content?.creatorName}`,
-    });
-    setTipAmount("");
+    if (!content) return;
+
+    setIsSendingTip(true);
+
+    try {
+      // Send tip to creator (using mock address for now)
+      const creatorAddress = content.creatorAddress || "SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7";
+      
+      const result = await sendPaymentTransaction(creatorAddress, amount);
+
+      if (result.success) {
+        toast({
+          title: "Tip sent! 🎉",
+          description: `You tipped ${amount} sBTC to ${content.creatorName}`,
+        });
+        setTipAmount("");
+        
+        // Refresh balance
+        await refreshBalance();
+      } else {
+        toast({
+          title: "Tip failed",
+          description: result.error || "Unable to send tip",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send tip",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingTip(false);
+    }
   };
+
+  // Check authentication
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to watch content",
+      });
+      navigate("/signin");
+    }
+  }, [user, navigate, toast]);
 
   if (!content) {
     return (
@@ -83,6 +200,10 @@ export default function Watch() {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
   }
 
   return (
@@ -112,19 +233,27 @@ export default function Watch() {
             </div>
 
             {/* Payment Status */}
-            <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-4 text-white">
+            <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-4 text-white min-w-[200px]">
               <div className="text-xs text-white/70 mb-1">Streaming</div>
               <div className="font-semibold text-primary">{content.price} sBTC/min</div>
               <div className="text-xs mt-2">Watched: {formatTime(watchTime)}</div>
               <div className="text-xs">Spent: {amountStreamed.toFixed(8)} sBTC</div>
+              <div className="text-xs">Balance: {balance.toFixed(8)} sBTC</div>
+              {isProcessingPayment && (
+                <div className="text-xs text-primary mt-2 flex items-center gap-2">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Processing payment...
+                </div>
+              )}
               {isPlaying && (
                 <Button 
                   size="sm" 
                   variant="destructive" 
                   className="w-full mt-2"
                   onClick={() => setIsPlaying(false)}
+                  disabled={isProcessingPayment}
                 >
-                  Pause Payment
+                  {isProcessingPayment ? 'Processing...' : 'Pause Payment'}
                 </Button>
               )}
             </div>
@@ -177,39 +306,53 @@ export default function Watch() {
             {/* Tip Section */}
             <Card className="p-6 mb-6">
               <h3 className="font-bold text-lg mb-4">Support this creator</h3>
+              <div className="text-sm text-muted-foreground mb-4">
+                Your balance: {balance.toFixed(8)} sBTC
+              </div>
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <Button 
                   variant="outline" 
                   onClick={() => handleTip(0.0001)}
+                  disabled={isSendingTip || balance < 0.0001}
                 >
-                  0.0001 sBTC
+                  {isSendingTip ? <Loader2 className="w-4 h-4 animate-spin" /> : '0.0001 sBTC'}
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => handleTip(0.0005)}
+                  disabled={isSendingTip || balance < 0.0005}
                 >
-                  0.0005 sBTC
+                  {isSendingTip ? <Loader2 className="w-4 h-4 animate-spin" /> : '0.0005 sBTC'}
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => handleTip(0.001)}
+                  disabled={isSendingTip || balance < 0.001}
                 >
-                  0.001 sBTC
+                  {isSendingTip ? <Loader2 className="w-4 h-4 animate-spin" /> : '0.001 sBTC'}
                 </Button>
               </div>
               <div className="flex gap-3">
                 <Input
                   type="number"
-                  step="0.0001"
+                  step="0.00000001"
                   placeholder="Custom amount"
                   value={tipAmount}
                   onChange={(e) => setTipAmount(e.target.value)}
+                  disabled={isSendingTip}
                 />
                 <Button 
                   onClick={() => tipAmount && handleTip(parseFloat(tipAmount))}
-                  disabled={!tipAmount}
+                  disabled={!tipAmount || isSendingTip || balance < parseFloat(tipAmount || '0')}
                 >
-                  Send Tip
+                  {isSendingTip ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Tip'
+                  )}
                 </Button>
               </div>
             </Card>
