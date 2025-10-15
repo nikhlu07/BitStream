@@ -10,6 +10,7 @@ export interface TurnkeyConfig {
 }
 
 export const getTurnkeyConfig = (): TurnkeyConfig => {
+  console.log(import.meta.env);
   const apiBaseUrl = import.meta.env.VITE_TURNKEY_API_BASE_URL || 'https://api.turnkey.com';
   const organizationId = import.meta.env.VITE_TURNKEY_ORGANIZATION_ID || '';
   const rpId = import.meta.env.VITE_TURNKEY_RP_ID || window.location.hostname;

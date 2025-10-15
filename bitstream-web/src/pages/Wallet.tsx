@@ -30,11 +30,13 @@ import { convertToUSD, formatAddress, getTestnetTokens } from "@/lib/turnkey";
 import { getNetworkConfig, getCurrentNetwork } from "@/config/network";
 import { isFaucetEnabled } from "@/config/turnkey";
 import { mockTransactions } from "@/data/mockData";
+import { useTurnkeyWallet } from "@/hooks/useTurnkeyWallet";
 
 export default function Wallet() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, balance, isLoading, refreshBalance, sendPaymentTransaction, signOut } = useWallet();
+  const { connectTurnkey, isLoading: isTurnkeyLoading, isConnected } = useTurnkeyWallet();
   const [withdrawAddress, setWithdrawAddress] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -318,19 +320,49 @@ export default function Wallet() {
           {/* Wallet Address */}
           <Card className="p-6">
             <h3 className="font-bold text-lg mb-4">Your Wallet Address</h3>
-            <div className="bg-muted p-4 rounded-lg mb-3 break-all font-mono text-sm">
-              {user.walletAddress}
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={copyAddress}>
-                <Copy className="w-4 h-4 mr-2" />
-                Copy
-              </Button>
-              <Button variant="outline" className="flex-1" onClick={openExplorer}>
-                <ExternalLink className="w-4 h-4 mr-2" />
-                View on Explorer
-              </Button>
-            </div>
+            
+            {user.walletAddress === 'PENDING_WALLET_CREATION' || user.walletAddress === 'PENDING_CONNECTION' ? (
+              <div className="space-y-4">
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-3">
+                    🔐 Your wallet needs to be connected with Turnkey to get a real Stacks address.
+                  </p>
+                  <Button 
+                    onClick={connectTurnkey} 
+                    disabled={isTurnkeyLoading}
+                    className="w-full"
+                  >
+                    {isTurnkeyLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      'Connect Turnkey Wallet'
+                    )}
+                  </Button>
+                </div>
+                <div className="bg-muted p-4 rounded-lg break-all font-mono text-sm text-muted-foreground">
+                  {user.walletAddress}
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="bg-muted p-4 rounded-lg mb-3 break-all font-mono text-sm">
+                  {user.walletAddress}
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={copyAddress}>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy
+                  </Button>
+                  <Button variant="outline" className="flex-1" onClick={openExplorer}>
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    View on Explorer
+                  </Button>
+                </div>
+              </>
+            )}
           </Card>
 
           {/* Withdraw */}

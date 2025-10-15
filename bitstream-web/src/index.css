@@ -95,3 +95,147 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Turnkey Modal Styles - Compatible with Tailwind v3 */
+.tk-style-sentinel {
+  height: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  visibility: hidden !important;
+  width: 1234px !important;
+}
+
+.tk-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.tk-modal * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.tk-modal-content,
+.tk-modal [class*="container"],
+.tk-modal [class*="dialog"],
+.tk-modal > div > div {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dark .tk-modal-content,
+.dark .tk-modal [class*="container"],
+.dark .tk-modal [class*="dialog"],
+.dark .tk-modal > div > div {
+  background: hsl(0 0% 10%);
+  color: white;
+  border: 1px solid hsl(0 0% 20%);
+}
+
+.tk-modal h1,
+.tk-modal h2,
+.tk-modal h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: inherit;
+}
+
+.tk-modal p {
+  font-size: 14px;
+  color: hsl(0 0% 60%);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.dark .tk-modal p {
+  color: hsl(0 0% 70%);
+}
+
+/* Simple approach - just ignore the warning and use the modal as-is */
+
+.tk-modal input:focus,
+.tk-modal [type="text"]:focus,
+.tk-modal [type="email"]:focus {
+  outline: none;
+  border-color: hsl(18 99% 54%);
+  box-shadow: 0 0 0 3px hsl(18 99% 54% / 0.1);
+}
+
+.dark .tk-modal input,
+.dark .tk-modal [type="text"],
+.dark .tk-modal [type="email"] {
+  background: hsl(0 0% 15%);
+  border-color: hsl(0 0% 25%);
+  color: white;
+}
+
+.tk-modal button {
+  width: 100%;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, hsl(18 99% 54%), hsl(33 100% 56%));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.tk-modal button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px -5px hsl(18 99% 54% / 0.4);
+}
+
+.tk-modal button:active {
+  transform: translateY(0);
+}
+
+.tk-modal button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tk-modal [class*="footer"],
+.tk-modal [class*="terms"] {
+  margin-top: 20px;
+  font-size: 12px;
+  color: hsl(0 0% 50%);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.tk-modal a {
+  color: hsl(18 99% 54%);
+  text-decoration: underline;
+}
+
+.tk-modal a:hover {
+  color: hsl(18 99% 60%);
+}

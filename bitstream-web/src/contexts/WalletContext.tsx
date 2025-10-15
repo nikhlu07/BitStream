@@ -6,15 +6,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   getUserData,
-  createWallet,
   saveUserData,
   clearUserData,
-  authenticateUser,
   UserAuth,
-  WalletCreationResult,
-  TransactionResult,
 } from '@/lib/turnkey';
 import { useWalletBalance, useSendPayment, useRefreshBalance } from '@/hooks/useWalletQueries';
+import { useTurnkeyWallet } from '@/hooks/useTurnkeyWallet';
 
 interface WalletContextType {
   // State
@@ -25,11 +22,11 @@ interface WalletContextType {
   error: string | null;
 
   // Wallet operations
-  createUserWallet: (email: string, username: string) => Promise<WalletCreationResult>;
+  createUserWallet: (email: string, username: string, walletAddress?: string) => Promise<{ success: boolean; data?: any; error?: string }>;
   refreshBalance: () => Promise<void>;
 
   // Transaction operations
-  sendPaymentTransaction: (toAddress: string, amount: number) => Promise<TransactionResult>;
+  sendPaymentTransaction: (toAddress: string, amount: number) => Promise<any>;
 
   // Auth operations
   signIn: (opts: { email?: string; walletAddress?: string }) => Promise<{ success: boolean; error?: string }>;
@@ -37,6 +34,10 @@ interface WalletContextType {
 
   // Error handling
   clearError: () => void;
+
+  // Internal methods for TurnkeyWalletCreator
+  setUser: (user: UserAuth) => void;
+  saveUserData: (user: UserAuth) => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -44,6 +45,9 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserAuth | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Get Turnkey wallet data
+  const { httpClient, publicKey, ethAddress, address: turnkeyAddress } = useTurnkeyWallet();
 
   // Use React Query for balance management
   const {
@@ -65,6 +69,16 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   }, []);
 
+  // Sync Turnkey address with user data
+  useEffect(() => {
+    if (user && turnkeyAddress && (user.walletAddress === 'PENDING_WALLET_CREATION' || user.walletAddress === 'PENDING_CONNECTION')) {
+      console.log('🔄 Syncing Turnkey address with user data:', turnkeyAddress);
+      const updatedUser = { ...user, walletAddress: turnkeyAddress };
+      setUser(updatedUser);
+      saveUserData(updatedUser);
+    }
+  }, [turnkeyAddress, user]);
+
   // Handle balance errors
   useEffect(() => {
     if (balanceError) {
@@ -75,22 +89,19 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const isLoading = isBalanceLoading || sendPaymentMutation.isPending;
 
-  // Sign in using Turnkey passkey auth
+  // Sign in using stored wallet data
   const signIn = async (
     opts: { email?: string; walletAddress?: string }
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       setError(null);
-      const result = await authenticateUser(opts);
-      if (result.success) {
-        const userData = getUserData();
-        if (userData) {
-          setUser(userData);
-          console.log('✅ User authenticated via Turnkey');
-        }
+      const userData = getUserData();
+      if (userData) {
+        setUser(userData);
+        console.log('✅ User authenticated');
         return { success: true };
       } else {
-        const msg = result.error || 'Authentication failed';
+        const msg = 'No user data found';
         setError(msg);
         return { success: false, error: msg };
       }
@@ -102,47 +113,39 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
-  // Create a new wallet for a user
+  // Create user wallet - can accept optional wallet address from Turnkey
   const createUserWallet = async (
     email: string,
-    username: string
-  ): Promise<WalletCreationResult> => {
+    username: string,
+    walletAddress?: string
+  ): Promise<{ success: boolean; data?: any; error?: string }> => {
     try {
-      setError(null);
-
-      console.log('🔐 Creating wallet for:', username);
-
-      const result = await createWallet(email, username);
-
-      if (result.success && result.data) {
-        // Save user data
-        const userData: UserAuth = {
-          email,
-          username,
-          walletAddress: result.data.walletAddress,
-          subOrgId: result.data.subOrgId,
-          userId: result.data.userId,
-          privateKeyId: result.data.privateKeyId,
-          createdAt: new Date().toISOString(),
-        };
-
-        saveUserData(userData);
-        setUser(userData);
-
-        console.log('✅ Wallet created and user data saved');
-        // Balance will be automatically fetched by React Query
-      } else {
-        setError(result.error || 'Failed to create wallet');
-      }
-
-      return result;
+      console.log('🔐 Creating user wallet for:', username);
+      
+      // If walletAddress provided (from Turnkey), use it. Otherwise mark as pending
+      const newUser: UserAuth = {
+        userId: `user-${Date.now()}`,
+        email,
+        username,
+        walletAddress: walletAddress || 'PENDING_WALLET_CREATION',
+        subOrgId: `sub-${Date.now()}`,
+        privateKeyId: `pk-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+      };
+      
+      saveUserData(newUser);
+      setUser(newUser);
+      console.log('✅ User saved with wallet:', walletAddress || 'PENDING');
+      
+      return {
+        success: true,
+        data: newUser,
+      };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setError(errorMessage);
-      console.error('❌ Error creating wallet:', error);
+      console.error('❌ Wallet creation error:', error);
       return {
         success: false,
-        error: errorMessage,
+        error: error instanceof Error ? error.message : 'Failed to create wallet',
       };
     }
   };
@@ -151,10 +154,14 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const sendPaymentTransaction = async (
     toAddress: string,
     amount: number
-  ): Promise<TransactionResult> => {
+  ): Promise<any> => {
     try {
       if (!user?.walletAddress) {
         throw new Error('No wallet connected');
+      }
+
+      if (!httpClient || !publicKey) {
+        throw new Error('Turnkey not initialized. Please connect your wallet.');
       }
 
       setError(null);
@@ -165,6 +172,9 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         fromAddress: user.walletAddress,
         toAddress,
         amount,
+        httpClient,
+        publicKey,
+        ethAddress,
       });
 
       if (result.success) {
@@ -222,6 +232,8 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         signIn,
         signOut,
         clearError,
+        setUser,
+        saveUserData,
       }}
     >
       {children}

@@ -15,6 +15,16 @@
   </head>
 
   <body>
+    <div class="tk-style-sentinel" style="height: 0px !important; pointer-events: none !important; position: absolute !important; visibility: hidden !important; width: 1234px !important;"></div>
+    <script>
+      // Ensure sentinel exists immediately
+      if (!document.querySelector('.tk-style-sentinel')) {
+        const sentinel = document.createElement('div');
+        sentinel.className = 'tk-style-sentinel';
+        sentinel.style.cssText = 'height: 0px !important; pointer-events: none !important; position: absolute !important; visibility: hidden !important; width: 1234px !important;';
+        document.body.insertBefore(sentinel, document.body.firstChild);
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

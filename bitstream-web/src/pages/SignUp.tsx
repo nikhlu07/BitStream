@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,12 +8,14 @@ import { Card } from "@/components/ui/card";
 import { Zap, Mail, User, CheckCircle2, Eye, Video, Wallet as WalletIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { useTurnkeyWallet } from "@/hooks/useTurnkeyWallet";
 
 export default function SignUp() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createUserWallet, isLoading: walletLoading } = useWallet();
+  const { connectTurnkey, address, isLoading: turnkeyLoading } = useTurnkeyWallet();
   
   const [accountType, setAccountType] = useState<"creator" | "viewer">(
     (searchParams.get("type") as "creator" | "viewer") || "viewer"
@@ -22,8 +24,48 @@ export default function SignUp() {
   const [username, setUsername] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [pendingUserData, setPendingUserData] = useState<{email: string, username: string} | null>(null);
   
-  const isLoading = isCreating || walletLoading;
+  const isLoading = isCreating || walletLoading || turnkeyLoading;
+
+  // When Turnkey address is received and we have pending user data, create the user
+  useEffect(() => {
+    if (address && address !== 'PENDING_WALLET_CREATION' && address !== 'PENDING_CONNECTION' && pendingUserData) {
+      console.log('✅ Got Turnkey address, creating user:', address);
+      finishSignup(pendingUserData.email, pendingUserData.username, address);
+    }
+  }, [address, pendingUserData]);
+
+  const finishSignup = async (email: string, username: string, walletAddress: string) => {
+    try {
+      // Create user with real Stacks address from Turnkey
+      const result = await createUserWallet(email, username, walletAddress);
+      
+      if (result.success) {
+        toast({
+          title: "Welcome to BitStream!",
+          description: `Your wallet has been created! Address: ${walletAddress.substring(0, 10)}...`,
+        });
+        
+        // Navigate based on account type
+        if (accountType === "creator") {
+          navigate("/dashboard");
+        } else {
+          navigate("/browse");
+        }
+      }
+    } catch (error) {
+      console.error('Error finishing signup:', error);
+      toast({
+        title: "Something went wrong",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+      setPendingUserData(null);
+    }
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,42 +104,24 @@ export default function SignUp() {
         ? `viewer_${Math.random().toString(36).substring(2, 8)}` // Auto-generated username
         : username;
       
-      console.log('🚀 Creating wallet for:', userUsername);
+      console.log('🚀 Connecting Turnkey wallet for:', userUsername);
       
-      // Create wallet using Turnkey
-      const result = await createUserWallet(userEmail, userUsername);
+      // Store user data and trigger Turnkey authentication
+      setPendingUserData({ email: userEmail, username: userUsername });
       
-      if (result.success && result.data) {
-        const walletAddress = result.data.walletAddress;
-        toast({
-          title: "Welcome to BitStream!",
-          description: accountType === "viewer" 
-            ? `Your anonymous wallet has been created securely. Address: ${walletAddress}`
-            : "Your account and wallet have been created successfully",
-        });
-        
-        // Navigate based on account type
-        if (accountType === "creator") {
-          navigate("/dashboard");
-        } else {
-          navigate("/browse");
-        }
-      } else {
-        toast({
-          title: "Wallet creation failed",
-          description: result.error || "Please try again",
-          variant: "destructive",
-        });
-      }
+      // Trigger Turnkey passkey authentication - this will show the modal
+      await connectTurnkey();
+      
+      // The useEffect above will complete signup when address is received
     } catch (error) {
       console.error('Error during signup:', error);
       toast({
-        title: "Something went wrong",
-        description: "Please try again or contact support",
+        title: "Turnkey Authentication Required",
+        description: "Please complete the passkey authentication to continue",
         variant: "destructive",
       });
-    } finally {
       setIsCreating(false);
+      setPendingUserData(null);
     }
   };
 
