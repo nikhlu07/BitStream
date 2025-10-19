@@ -1,7 +1,7 @@
 # BitStream 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Stacks](https://img.shields.io/badge/Stacks-sBTC-5546FF)](https://stacks.co)
-[![Turnkey](https://img.shields.io/badge/Wallets-Turnkey-00D4AA)](https://turnkey.com)
+[![Leather](https://img.shields.io/badge/Wallet-Leather-FF6B35)](https://leather.io)
 
 <img src="logo.png" alt="BitStream Logo" width="100"/>
 
@@ -24,22 +24,22 @@ Traditional content monetization platforms suffer from:
 
 ## 💡 Solution
 
-BitStream leverages **sBTC** on Stacks and **Turnkey's embedded wallets** to create a **privacy-first, secure micropayment experience** for exclusive content where:
+BitStream leverages **sBTC** on Stacks with **dual wallet options** to create a **privacy-first, secure micropayment experience** for exclusive content where:
 - **Anonymous viewing**: Users consume content without revealing identity
 - **Instant creator payments**: Real-time sBTC settlements per second of content
-- **Pseudonymous accounts**: No KYC, no personal data collection
+- **Flexible wallet options**: Choose between embedded wallets (Turnkey) or existing Stacks wallets (Leather/Xverse)
 - **Secure payments**: Bitcoin-level security with smart contract automation
 - Users pay only for what they consume (per-second streaming)
-- Zero crypto complexity—sign up with email/passkey
+- **Easy onboarding**: Email/passkey signup OR connect existing wallet
 - Perfect for exclusive content creators who value privacy and safety
 
 ## ✨ Key Features 
 
 ### For Users
 - **Anonymous Access**: Watch exclusive content without revealing identity
-- **Email/Passkey Signup**: No seed phrases, no wallet downloads, no KYC
-- **Auto-Generated Wallets**: Turnkey-powered embedded wallets created on signup
-- **Pre-Loaded Testnet sBTC**: Ready to start consuming content immediately
+- **Dual Wallet Options**: 
+  - **Easy Mode**: Email/passkey signup with embedded Turnkey wallets
+  - **Advanced Mode**: Connect existing Leather or Xverse wallets
 - **Privacy-Protected Payments**: Transactions pseudonymous via Bitcoin
 - **Automatic Micropayments**: Set-and-forget streaming payments while consuming content
 - **One-Click Tipping**: Boost creators during live streams with instant sBTC tips
@@ -58,34 +58,29 @@ BitStream leverages **sBTC** on Stacks and **Turnkey's embedded wallets** to cre
 ### Technical Highlights
 - **Smart Contract Streaming**: Clarity contracts handle automated micropayment releases
 - **sBTC Programmability**: Demonstrates novel Bitcoin Layer 2 use cases
-- **Embedded Wallet UX**: Showcase superior non-custodial wallet experience
-- **Full Transaction Lifecycle**: End-to-end sBTC minting, streaming, and settlement
+- **Stacks Wallet Integration**: Seamless connection with popular Stacks wallets
+- **Full Transaction Lifecycle**: End-to-end sBTC streaming and settlement
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────┐
 │  React Client   │
-│  Email/Passkey  │
+│ Stacks Connect  │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│  Turnkey SDK    │
-│ Embedded Wallet │
+│ Leather/Xverse  │
+│  Stacks Wallet  │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐      ┌──────────────────┐
-│   Node.js API   │◄────►│  Stacks Network  │
-│    (Express)    │      │  (Clarity Smart  │
-└────────┬────────┘      │   Contracts)     │
-         │               └──────────────────┘
-         ▼
-┌─────────────────┐
-│   PostgreSQL    │
-│  (User/Content) │
-└─────────────────┘
+│   Smart         │◄────►│  Stacks Network  │
+│   Contracts     │      │  (Clarity Smart  │
+└─────────────────┘      │   Contracts)     │
+                         └──────────────────┘
 ```
 
 ## 🛠️ Tech Stack
@@ -94,21 +89,19 @@ BitStream leverages **sBTC** on Stacks and **Turnkey's embedded wallets** to cre
 - React 18
 - TypeScript
 - Tailwind CSS
-- React Query
-- React Router
-
-**Backend**
-- Node.js + Express
-- Turnkey SDK (Wallet Infrastructure)
-- @stacks/transactions (sBTC interactions)
-- Clarity Smart Contracts
-
-**Database**
-- PostgreSQL (User profiles, content metadata)
+- Stacks Connect
+- @stacks/transactions
 
 **Blockchain**
-- Stacks Testnet
+- Stacks Testnet/Mainnet
 - sBTC (Bitcoin L2)
+- Clarity Smart Contracts
+
+**Wallet Options**
+- **Turnkey Embedded Wallets** (Email/Passkey signup)
+- **Leather Wallet** (Connect existing)
+- **Xverse Wallet** (Connect existing)
+- **Any Stacks-compatible wallet**
 
 ## 🚀 Getting Started
 
@@ -117,7 +110,6 @@ BitStream leverages **sBTC** on Stacks and **Turnkey's embedded wallets** to cre
 ```bash
 node >= 18.x
 npm >= 9.x
-postgresql >= 14.x
 ```
 
 ### Installation
@@ -132,173 +124,156 @@ cd bitstream
 
 Frontend:
 ```bash
-cd client
+cd bitstream-web
 npm install
 ```
 
-Backend:
+Contracts:
 ```bash
-cd ../server
+cd bitstream-contracts
 npm install
 ```
 
 3. **Environment Setup**
 
-Frontend (`client/.env`):
-```bash
-cp .env.example .env
-```
-
+Frontend (`bitstream-web/.env.development`):
 ```env
-REACT_APP_API_URL=http://localhost:5000
-REACT_APP_TURNKEY_API_PUBLIC_KEY=your_public_key
-REACT_APP_STACKS_NETWORK=testnet
-REACT_APP_SBTC_CONTRACT_ADDRESS=your_contract_address
+# Stacks Configuration
+VITE_STACKS_NETWORK=testnet
+VITE_STACKS_API_URL=https://api.testnet.hiro.so
+
+# Contract Addresses (Testnet)
+VITE_CONTRACT_CONTENT_REGISTRY=SP2AJZZ6JAGEXV7SX056F9EZFABTX64CM2CQTPCCX.content-registry
+VITE_CONTRACT_ACCESS_CONTROL=SP2AJZZ6JAGEXV7SX056F9EZFABTX64CM2CQTPCCX.access-control
+VITE_CONTRACT_PAYMENT_PROCESSOR=SP2AJZZ6JAGEXV7SX056F9EZFABTX64CM2CQTPCCX.payment-processor
+
+# Feature Flags
+VITE_DEMO_MODE=false
+VITE_ENABLE_FAUCET=true
 ```
 
-Backend (`server/.env`):
+4. **Deploy Smart Contracts** (Optional - already deployed to testnet)
 ```bash
-cp .env.example .env
+cd bitstream-contracts
+node deploy-simple.cjs
 ```
 
-```env
-# Turnkey API Credentials
-TURNKEY_API_PRIVATE_KEY=your_private_key
-TURNKEY_ORGANIZATION_ID=your_org_id
-
-# Stacks Network
-STACKS_NETWORK=testnet
-SBTC_CONTRACT_ADDRESS=your_contract_address
-
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/bitstream
-
-# Server Config
-PORT=5000
-NODE_ENV=development
-JWT_SECRET=your_jwt_secret
-```
-
-4. **Database Setup**
+5. **Start Development Server**
 ```bash
-cd server
-npm run db:migrate
-npm run db:seed
-```
-
-5. **Deploy Smart Contracts**
-```bash
-npm run contracts:deploy
-```
-
-6. **Start Development Servers**
-
-Backend:
-```bash
-cd server
+cd bitstream-web
 npm run dev
 ```
 
-Frontend (in new terminal):
-```bash
-cd client
-npm start
-```
-
-Visit `http://localhost:3000`
+Visit `http://localhost:5173`
 
 ## 📁 Project Structure
 
 ```
 bitstream/
-├── client/                 # React frontend
-│   ├── public/             # Static assets
+├── bitstream-web/          # React frontend
 │   ├── src/
 │   │   ├── components/     # React components
-│   │   │   ├── creator/    # Creator dashboard components
-│   │   │   ├── consumer/   # Content consumption UI
-│   │   │   └── common/     # Shared components
 │   │   ├── pages/          # Page components
-│   │   ├── hooks/          # Custom React hooks
-│   │   ├── services/       # API service layer
-│   │   │   ├── api.js      # Axios instance
-│   │   │   ├── turnkey.js  # Turnkey wallet utilities
-│   │   │   └── stacks.js   # Stacks/sBTC helpers
-│   │   ├── context/        # React context providers
-│   │   ├── utils/          # Helper functions
-│   │   └── App.js          # Root component
+│   │   ├── contexts/       # React context providers
+│   │   │   └── StacksWalletContext.tsx # Stacks wallet integration
+│   │   ├── lib/            # Utility libraries
+│   │   │   └── contracts/  # Smart contract interactions
+│   │   ├── config/         # Configuration files
+│   │   └── App.tsx         # Root component
 │   └── package.json
 │
-├── server/                 # Node.js backend
-│   ├── src/
-│   │   ├── controllers/    # Route controllers
-│   │   │   ├── auth.js     # Authentication
-│   │   │   ├── content.js  # Content management
-│   │   │   ├── streaming.js # Payment streaming
-│   │   │   └── wallet.js   # Wallet operations
-│   │   ├── middleware/     # Express middleware
-│   │   │   ├── auth.js     # JWT verification
-│   │   │   └── validation.js # Input validation
-│   │   ├── models/         # Database models
-│   │   ├── routes/         # API routes
-│   │   ├── services/       # Business logic
-│   │   │   ├── turnkey.js  # Turnkey integration
-│   │   │   ├── stacks.js   # Stacks blockchain
-│   │   │   └── streaming.js # Payment logic
-│   │   ├── config/         # Configuration
-│   │   │   ├── database.js # DB connection
-│   │   │   └── stacks.js   # Stacks config
-│   │   └── server.js       # Express app entry
-│   └── package.json
+├── bitstream-contracts/    # Clarity smart contracts
+│   ├── contracts/          # Contract source files
+│   │   ├── content-registry.clar    # Content management
+│   │   ├── access-control.clar      # Access permissions
+│   │   └── payment-processor.clar   # Payment processing
+│   ├── deploy-simple.cjs   # Deployment script
+│   └── DEPLOYMENT.md       # Deployment guide
 │
-└── contracts/              # Clarity smart contracts
-    ├── streaming.clar      # Micropayment streaming logic
-    └── tipping.clar        # One-click tipping contract
+└── .kiro/                  # Development specifications
+    └── specs/              # Project specifications
 ```
 
 ## 🎮 Usage
 
+### Setup Your Wallet
+
+**Option 1: Turnkey Embedded Wallet (Recommended for beginners)**
+1. **Sign Up**: Use email and passkey to create account
+2. **Instant Wallet**: Wallet created automatically
+3. **Get Testnet STX**: Use built-in faucet feature
+
+**Option 2: Existing Stacks Wallet (Advanced users)**
+1. **Install Leather Wallet**: Download from [leather.io](https://leather.io)
+2. **Create/Import Wallet**: Set up your Stacks wallet
+3. **Get Testnet STX**: Visit [Stacks Testnet Faucet](https://explorer.hiro.so/sandbox/faucet?chain=testnet)
+
 ### As a Consumer
 
-1. **Sign Up**: Create account with email or passkey
+1. **Connect Wallet**: Click "Connect Stacks Wallet" and approve in Leather
 2. **Browse Content**: Discover creators and content
-3. **Start Streaming**: Click play—micropayments stream automatically
+3. **Start Streaming**: Click play—micropayments stream automatically via wallet
 4. **Tip Creators**: Send one-click sBTC boosts during live content
 
 ### As a Creator
 
-1. **Create Profile**: Set up your creator account
+1. **Connect Wallet**: Link your Stacks wallet to create profile
 2. **Upload Content**: Add podcasts, videos, or livestream
 3. **Set Your Rate**: Configure per-minute sBTC pricing
 4. **Go Live**: Start earning as users consume your content
-5. **Withdraw**: Instant sBTC withdrawal to your Bitcoin wallet
+5. **Withdraw**: Instant sBTC withdrawal to your wallet
 
 ## 📝 Smart Contract Interfaces
 
-### Streaming Contract
+### Content Registry Contract
 
 ```clarity
-;; Start streaming payment
-(define-public (start-stream 
-    (creator principal) 
-    (rate-per-minute uint))
+;; Register new content
+(define-public (register-content 
+    (content-hash (buff 32))
+    (metadata-uri (string-ascii 256))
+    (price uint)
+    (creator principal))
     ;; Implementation
 )
 
-;; Stop streaming and settle payment
-(define-public (stop-stream 
-    (stream-id uint))
+;; Get content information
+(define-read-only (get-content-info 
+    (content-id uint))
     ;; Implementation
 )
 ```
 
-### Tipping Contract
+### Payment Processor Contract
 
 ```clarity
-;; Send tip to creator
-(define-public (send-tip 
-    (creator principal) 
-    (amount uint))
+;; Purchase content access
+(define-public (purchase-content 
+    (content-id uint)
+    (payment-amount uint))
+    ;; Implementation
+)
+
+;; Withdraw creator earnings
+(define-public (withdraw-earnings)
+    ;; Implementation
+)
+```
+
+### Access Control Contract
+
+```clarity
+;; Check if user has access
+(define-read-only (has-access 
+    (content-id uint)
+    (viewer principal))
+    ;; Implementation
+)
+
+;; Grant access to content
+(define-public (grant-access
+    (content-id uint)
+    (viewer principal))
     ;; Implementation
 )
 ```
@@ -306,80 +281,77 @@ bitstream/
 ## 🔐 Security Considerations
 
 **Privacy & Anonymity**
-- **No KYC Required**: Users and creators can remain pseudonymous
-- **Minimal Data Collection**: Only essential information (email/passkey) stored
-- **Pseudonymous Transactions**: Payments via Bitcoin addresses, not personal identities
-- **No Viewing History Tracking**: Content consumption data not linked to real identities
-- **Encrypted Communications**: All data in transit protected via HTTPS/TLS
+- **Wallet-Based Identity**: Users identified only by Stacks addresses
+- **Minimal Data Collection**: No personal information required
+- **Pseudonymous Transactions**: Payments via Bitcoin addresses
+- **No Viewing History Tracking**: Content consumption not linked to real identities
 
 **Payment Security**
-- **Embedded Wallets**: Non-custodial—users control keys via Turnkey's secure enclave
+- **Non-Custodial Wallets**: Users control their own keys via Leather/Xverse
 - **Smart Contract Automation**: Reduces human error and fraud vectors
-- **No Credit Card Storage**: Zero traditional payment data collected
-- **Instant Settlement**: Bitcoin finality prevents chargebacks and disputes
+- **Instant Settlement**: Bitcoin finality prevents chargebacks
 - **Multi-Signature Options**: Available for high-value creator accounts
 
 **Platform Security**
-- **Smart Contract Audits**: (Pending for production)
-- **Rate Limiting**: API protection against abuse and DDoS
-- **Input Validation**: All user inputs sanitized to prevent injection attacks
-- **HTTPS Only**: All production traffic encrypted
-- **Secure Key Management**: Turnkey's institutional-grade key infrastructure
-- **Regular Security Updates**: Dependencies monitored and patched
-
-**Creator Safety**
-- **Payout Anonymity**: Withdraw to any Bitcoin address—no personal banking details
-- **Content Access Control**: Smart contract-enforced payment verification
-- **Anti-Piracy**: Streaming verification prevents unauthorized redistribution
-- **Dispute Resolution**: Transparent on-chain transaction records
+- **Smart Contract Verification**: All contracts deployed and verified on Stacks
+- **Open Source**: Full transparency of contract code
+- **Wallet Security**: Leverages battle-tested Stacks wallet infrastructure
+- **No Private Key Storage**: Platform never handles user private keys
 
 ## 🧪 Testing
 
+### Test Smart Contracts
+
+Visit the test page at `/test-contracts` to:
+- Connect your Stacks wallet
+- Test contract interactions
+- Verify deployment status
+- Send test transactions
+
 ```bash
-# Frontend tests
-cd client
+# Run frontend tests
+cd bitstream-web
 npm test
 
-# Backend tests
-cd server
+# Test contract deployment
+cd bitstream-contracts
 npm test
-
-# Smart contract tests
-npm run test:contracts
-
-# Integration tests
-npm run test:integration
-
-# E2E tests
-npm run test:e2e
 ```
+
+## 🌐 Deployed Contracts (Testnet)
+
+| Contract | Address |
+|----------|---------|
+| **Content Registry** | `SP2AJZZ6JAGEXV7SX056F9EZFABTX64CM2CQTPCCX.content-registry` |
+| **Access Control** | `SP2AJZZ6JAGEXV7SX056F9EZFABTX64CM2CQTPCCX.access-control` |
+| **Payment Processor** | `SP2AJZZ6JAGEXV7SX056F9EZFABTX64CM2CQTPCCX.payment-processor` |
 
 ## 🗺️ Roadmap
 
 **MVP (Current)**
-- [x] Turnkey embedded wallet integration
-- [x] Basic streaming payment contract
+- [x] Stacks wallet integration (Leather, Xverse)
+- [x] Smart contract deployment on testnet
+- [x] Basic content registry and payment processing
 - [x] Creator dashboard
 - [x] Consumer content player
-- [x] Testnet sBTC integration
 
 **Phase 2**
 - [ ] Mainnet launch
-- [ ] Mobile responsive optimization
-- [ ] Advanced analytics for creators
-- [ ] Multi-tier subscription options
+- [ ] Advanced streaming payment mechanics
 - [ ] Content recommendation engine
+- [ ] Mobile responsive optimization
+- [ ] Multi-tier subscription options
 
 **Phase 3**
-- [ ] Mobile apps (iOS/Android)
+- [ ] Mobile apps with wallet integration
 - [ ] Creator NFT badges
 - [ ] Decentralized content storage (IPFS)
 - [ ] Cross-chain support
-- [ ] Advertising marketplace
+- [ ] Advanced analytics dashboard
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
@@ -394,7 +366,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [Stacks Foundation](https://stacks.org) for sBTC infrastructure
-- [Turnkey](https://turnkey.com) for embedded wallet technology
+- [Leather Wallet](https://leather.io) for excellent Stacks wallet UX
+- [Xverse](https://xverse.app) for multi-chain wallet support
 - Bitcoin community for continuous innovation
 
-**Built with ⚡ at [Hackathon Name]**
+**Built with ⚡ for the Stacks ecosystem**

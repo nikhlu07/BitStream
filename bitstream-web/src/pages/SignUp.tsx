@@ -7,8 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { Zap, Mail, User, CheckCircle2, Eye, Video, Wallet as WalletIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useWallet } from "@/contexts/WalletContext";
-import { useStacksWallet } from "@/hooks/useStacksWallet";
+import { useStacksWallet } from "@/contexts/StacksWalletContext";
 import { useContractInteraction } from "@/hooks/useContractInteraction";
 
 
@@ -16,8 +15,7 @@ export default function SignUp() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { createUserWallet, isLoading: walletLoading } = useWallet();
-  const { connectWallet, address, isLoading: stacksLoading } = useStacksWallet();
+  const { connectWallet, address, isLoading: stacksLoading, isConnected } = useStacksWallet();
   const { network, error: contractError, clearError } = useContractInteraction();
   
   const [accountType, setAccountType] = useState<"creator" | "viewer">(
@@ -30,7 +28,7 @@ export default function SignUp() {
   const [pendingUserData, setPendingUserData] = useState<{email: string, username: string} | null>(null);
 
   
-  const isLoading = isCreating || walletLoading || stacksLoading;
+  const isLoading = isCreating || stacksLoading;
 
   // When Stacks address is received and we have pending user data, create the user
   useEffect(() => {
@@ -42,24 +40,30 @@ export default function SignUp() {
 
   const finishSignup = async (email: string, username: string, walletAddress: string) => {
     try {
-      // Create user with real Stacks address from wallet
-      const result = await createUserWallet(email, username, walletAddress);
+      // Save user data to localStorage (in a real app, you'd save to a backend)
+      const userData = {
+        email,
+        username,
+        walletAddress,
+        accountType,
+        createdAt: new Date().toISOString(),
+      };
       
-      if (result.success) {
-        // Clear any contract errors
-        clearError();
-        
-        toast({
-          title: "Welcome to BitStream!",
-          description: `Your wallet has been created! Address: ${walletAddress.substring(0, 10)}... (${network})`,
-        });
-        
-        // Navigate based on account type
-        if (accountType === "creator") {
-          navigate("/dashboard");
-        } else {
-          navigate("/browse");
-        }
+      localStorage.setItem('bitstream_user', JSON.stringify(userData));
+      
+      // Clear any contract errors
+      clearError();
+      
+      toast({
+        title: "Welcome to BitStream!",
+        description: `Your wallet is connected! Address: ${walletAddress.substring(0, 10)}... (${network})`,
+      });
+      
+      // Navigate based on account type
+      if (accountType === "creator") {
+        navigate("/dashboard");
+      } else {
+        navigate("/browse");
       }
     } catch (error) {
       console.error('Error finishing signup:', error);

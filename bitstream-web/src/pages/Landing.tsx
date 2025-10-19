@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import WalletSelector from "@/components/WalletSelector";
 import { 
   Eye, 
   Bitcoin, 
@@ -38,7 +39,7 @@ export default function Landing() {
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Anonymous viewing. Real-time earnings. Zero fees. Built on Bitcoin.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link to="/signup?type=creator">
                 <Button size="lg" className="w-full sm:w-auto">
                   Start Earning
@@ -54,6 +55,11 @@ export default function Landing() {
                   🎯 Streaming Demo
                 </Button>
               </Link>
+            </div>
+            
+            {/* Wallet Connection */}
+            <div className="max-w-lg mx-auto">
+              <WalletSelector />
             </div>
           </div>
 
@@ -257,7 +263,7 @@ export default function Landing() {
               </div>
               <h3 className="text-lg font-bold mb-2">Non-Custodial Wallets</h3>
               <p className="text-sm text-muted-foreground">
-                You control your keys. Turnkey's secure enclave technology protects your funds.
+                You control your keys. Connect your Leather or Xverse wallet securely.
               </p>
             </Card>
 

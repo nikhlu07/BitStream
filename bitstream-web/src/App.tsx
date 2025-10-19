@@ -14,6 +14,7 @@ import Wallet from "./pages/Wallet";
 import StreamingDemo from "./pages/StreamingDemo";
 import NotFound from "./pages/NotFound";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { StacksWalletProvider } from "@/contexts/StacksWalletContext";
 import ContractTest from "./components/ContractTest";
 
 import "./index.css";
@@ -22,25 +23,27 @@ import "./index.css";
 const App = () => (
   <TooltipProvider>
     <WalletProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/browse" element={<Browse />} />
-          <Route path="/watch/:contentId" element={<Watch />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/content" element={<Content />} />
-          <Route path="/dashboard/analytics" element={<Analytics />} />
-          <Route path="/wallet" element={<Wallet />} />
-          <Route path="/streaming" element={<StreamingDemo />} />
-          <Route path="/test-contracts" element={<ContractTest />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <StacksWalletProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/browse" element={<Browse />} />
+            <Route path="/watch/:contentId" element={<Watch />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/content" element={<Content />} />
+            <Route path="/dashboard/analytics" element={<Analytics />} />
+            <Route path="/wallet" element={<Wallet />} />
+            <Route path="/streaming" element={<StreamingDemo />} />
+            <Route path="/test-contracts" element={<ContractTest />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </StacksWalletProvider>
     </WalletProvider>
   </TooltipProvider>
 );
