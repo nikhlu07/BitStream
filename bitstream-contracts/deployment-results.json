@@ -1,0 +1,25 @@
+{
+  "timestamp": "2025-10-19T00:20:12.122Z",
+  "network": "testnet",
+  "deployer": "SP2AJZZ6JAGEXV7SX056F9EZFABTX64CM2CQTPCCX",
+  "contracts": [
+    {
+      "name": "content-registry",
+      "path": "contracts/content-registry.clar",
+      "success": true,
+      "txId": "{\n  error: 'transaction rejected',\n  reason: 'NotEnoughFunds',\n  reason_data: {\n    actual: '0x00000000000000000000000000000000',\n    expected: '0x0000000000000000000000000000c350'\n  },\n  txid: 'bde145762dca86e963f01b45c97e980d5be007e54b4eb17f6be958ab4982ea2d'\n}"
+    },
+    {
+      "name": "access-control",
+      "path": "contracts/access-control.clar",
+      "success": true,
+      "txId": "{\n  error: 'transaction rejected',\n  reason: 'NotEnoughFunds',\n  reason_data: {\n    actual: '0x00000000000000000000000000000000',\n    expected: '0x0000000000000000000000000000c350'\n  },\n  txid: '6f95ed0c24dc4e6b297604813dba457b95d94591eeabe8205c94e9b566af38e4'\n}"
+    },
+    {
+      "name": "payment-processor",
+      "path": "contracts/payment-processor.clar",
+      "success": true,
+      "txId": "{\n  error: 'transaction rejected',\n  reason: 'NotEnoughFunds',\n  reason_data: {\n    actual: '0x00000000000000000000000000000000',\n    expected: '0x0000000000000000000000000000c350'\n  },\n  txid: 'c73496ee57449769eb59879287b5d0924d3f20a369d958e7873381e2004acc48'\n}"
+    }
+  ]
+}

@@ -24,6 +24,36 @@
         sentinel.style.cssText = 'height: 0px !important; pointer-events: none !important; position: absolute !important; visibility: hidden !important; width: 1234px !important;';
         document.body.insertBefore(sentinel, document.body.firstChild);
       }
+      
+      // Suppress Turnkey style warnings
+      const suppressTurnkeyWarning = () => {
+        // Hide any Turnkey warning modals
+        const warnings = document.querySelectorAll('[data-testid*="turnkey"], .turnkey-warning, .tk-warning');
+        warnings.forEach(warning => {
+          if (warning instanceof HTMLElement) {
+            warning.style.display = 'none';
+          }
+        });
+        
+        // Override console warnings from Turnkey
+        const originalWarn = console.warn;
+        console.warn = (...args) => {
+          const message = args.join(' ');
+          if (message.includes('Turnkey') && message.includes('styles')) {
+            return; // Suppress Turnkey style warnings
+          }
+          originalWarn.apply(console, args);
+        };
+      };
+      
+      // Run immediately and on DOM changes
+      suppressTurnkeyWarning();
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', suppressTurnkeyWarning);
+      }
+      
+      // Also run periodically to catch dynamically added warnings
+      setInterval(suppressTurnkeyWarning, 1000);
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

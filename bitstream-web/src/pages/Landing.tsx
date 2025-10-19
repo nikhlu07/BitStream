@@ -49,6 +49,11 @@ export default function Landing() {
                   Explore Content
                 </Button>
               </Link>
+              <Link to="/streaming">
+                <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                  🎯 Streaming Demo
+                </Button>
+              </Link>
             </div>
           </div>
 

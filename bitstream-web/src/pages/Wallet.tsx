@@ -30,13 +30,13 @@ import { convertToUSD, formatAddress, getTestnetTokens } from "@/lib/turnkey";
 import { getNetworkConfig, getCurrentNetwork } from "@/config/network";
 import { isFaucetEnabled } from "@/config/turnkey";
 import { mockTransactions } from "@/data/mockData";
-import { useTurnkeyWallet } from "@/hooks/useTurnkeyWallet";
+import { useStacksWallet } from "@/hooks/useStacksWallet";
 
 export default function Wallet() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, balance, isLoading, refreshBalance, sendPaymentTransaction, signOut } = useWallet();
-  const { connectTurnkey, isLoading: isTurnkeyLoading, isConnected } = useTurnkeyWallet();
+  const { connectWallet, disconnectWallet, isLoading: isStacksLoading, isConnected, address: stacksAddress } = useStacksWallet();
   const [withdrawAddress, setWithdrawAddress] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);

@@ -20,19 +20,31 @@ import {
 import { mockContent } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { usePaymentFlow } from "@/hooks/usePaymentFlow";
+import { useContractInteraction } from "@/hooks/useContractInteraction";
+import { parseSTX, formatSTX } from "@/lib/contracts";
 
 export default function Watch() {
   const { contentId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, balance, sendPaymentTransaction, refreshBalance } = useWallet();
+  const { 
+    startStreamingPayment, 
+    stopStreamingPayment, 
+    streamingSession, 
+    isLoading: paymentLoading,
+    error: paymentError,
+    getStreamingStats 
+  } = usePaymentFlow();
+  const { hasAccess, getContentInfo } = useContractInteraction();
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [watchTime, setWatchTime] = useState(0);
-  const [amountStreamed, setAmountStreamed] = useState(0);
   const [tipAmount, setTipAmount] = useState("");
   const [isSendingTip, setIsSendingTip] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [hasContentAccess, setHasContentAccess] = useState(false);
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
   
   const lastPaymentTime = useRef<number>(0);
   const accumulatedAmount = useRef<number>(0);
@@ -40,78 +52,96 @@ export default function Watch() {
   const content = mockContent.find(c => c.id === contentId);
   const relatedContent = mockContent.filter(c => c.id !== contentId).slice(0, 4);
 
-  // Streaming payment logic - accumulate and send every 30 seconds
+  // Check content access on load
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying && content) {
-      interval = setInterval(() => {
-        setWatchTime(prev => prev + 1);
+    const checkAccess = async () => {
+      if (!user?.walletAddress || !contentId) {
+        setIsCheckingAccess(false);
+        return;
+      }
+
+      try {
+        const contentIdBigInt = BigInt(contentId);
+        const accessResult = await hasAccess(contentIdBigInt, user.walletAddress);
         
-        // Calculate payment per second
-        const paymentPerSecond = content.price / 60;
-        setAmountStreamed(prev => prev + paymentPerSecond);
-        accumulatedAmount.current += paymentPerSecond;
-        
-        // Send accumulated payment every 30 seconds
-        const now = Date.now();
-        if (now - lastPaymentTime.current >= 30000 && accumulatedAmount.current > 0) {
-          processStreamingPayment();
+        if (accessResult.success) {
+          setHasContentAccess(accessResult.data || false);
+        } else {
+          setHasContentAccess(false);
         }
-      }, 1000);
-    }
-    return () => {
-      clearInterval(interval);
-      // Send final payment when stopping
-      if (accumulatedAmount.current > 0) {
-        processStreamingPayment();
+      } catch (error) {
+        console.error('Error checking access:', error);
+        setHasContentAccess(false);
+      } finally {
+        setIsCheckingAccess(false);
       }
     };
-  }, [isPlaying, content]);
 
-  const processStreamingPayment = async () => {
-    if (!content || !user || accumulatedAmount.current === 0 || isProcessingPayment) {
-      return;
+    checkAccess();
+  }, [user?.walletAddress, contentId, hasAccess]);
+
+  // Watch time tracking
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setWatchTime(prev => prev + 1);
+      }, 1000);
     }
+    return () => clearInterval(interval);
+  }, [isPlaying]);
 
-    const amountToSend = accumulatedAmount.current;
-    
-    // Check balance
-    if (balance < amountToSend) {
-      setIsPlaying(false);
-      toast({
-        title: "Insufficient balance",
-        description: "Please add more sBTC to continue watching",
-        variant: "destructive",
-      });
-      return;
-    }
+  // Handle play/pause with smart contract integration
+  const handlePlayPause = async () => {
+    if (!content || !user) return;
 
-    setIsProcessingPayment(true);
-    
-    try {
-      // Send payment to creator (using mock address for now)
-      const creatorAddress = content.creatorAddress || "SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7";
+    if (!isPlaying) {
+      // Starting playback - check access and start streaming payment
+      if (!hasContentAccess) {
+        toast({
+          title: "Access required",
+          description: "You need to purchase access to this content first",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Start streaming payment
+      const contentIdBigInt = BigInt(contentId!);
+      const pricePerMinute = parseSTX(content.price.toString());
       
-      const result = await sendPaymentTransaction(creatorAddress, amountToSend);
+      const result = await startStreamingPayment(contentIdBigInt, pricePerMinute);
       
       if (result.success) {
-        console.log('✅ Streaming payment sent:', amountToSend, 'sBTC');
-        lastPaymentTime.current = Date.now();
-        accumulatedAmount.current = 0;
-      } else {
-        console.error('❌ Streaming payment failed:', result.error);
-        setIsPlaying(false);
+        setIsPlaying(true);
         toast({
-          title: "Payment failed",
-          description: "Unable to process streaming payment",
+          title: "Streaming started",
+          description: `Paying ${content.price} sBTC/min to ${content.creatorName}`,
+        });
+      } else {
+        toast({
+          title: "Failed to start streaming",
+          description: result.error || "Unable to start payment stream",
           variant: "destructive",
         });
       }
-    } catch (error) {
-      console.error('Error processing streaming payment:', error);
+    } else {
+      // Stopping playback
+      const result = await stopStreamingPayment();
       setIsPlaying(false);
-    } finally {
-      setIsProcessingPayment(false);
+      
+      if (result.success) {
+        toast({
+          title: "Streaming stopped",
+          description: "Final payment processed",
+        });
+      } else {
+        toast({
+          title: "Error stopping stream",
+          description: result.error || "There was an issue processing the final payment",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -221,10 +251,13 @@ export default function Watch() {
             {/* Play/Pause Overlay */}
             <div className="absolute inset-0 flex items-center justify-center">
               <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-all hover:scale-110"
+                onClick={handlePlayPause}
+                disabled={paymentLoading || isCheckingAccess}
+                className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isPlaying ? (
+                {paymentLoading ? (
+                  <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                ) : isPlaying ? (
                   <Pause className="w-10 h-10 text-primary" fill="currentColor" />
                 ) : (
                   <Play className="w-10 h-10 text-primary ml-1" fill="currentColor" />
@@ -234,27 +267,33 @@ export default function Watch() {
 
             {/* Payment Status */}
             <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-4 text-white min-w-[200px]">
-              <div className="text-xs text-white/70 mb-1">Streaming</div>
+              <div className="text-xs text-white/70 mb-1">
+                {isCheckingAccess ? 'Checking access...' : hasContentAccess ? 'Streaming' : 'Access required'}
+              </div>
               <div className="font-semibold text-primary">{content.price} sBTC/min</div>
               <div className="text-xs mt-2">Watched: {formatTime(watchTime)}</div>
-              <div className="text-xs">Spent: {amountStreamed.toFixed(8)} sBTC</div>
+              {streamingSession && (
+                <>
+                  <div className="text-xs">Spent: {getStreamingStats().totalPaid} sBTC</div>
+                  <div className="text-xs">Rate: {getStreamingStats().currentRate} sBTC/min</div>
+                </>
+              )}
               <div className="text-xs">Balance: {balance.toFixed(8)} sBTC</div>
-              {isProcessingPayment && (
+              {paymentLoading && (
                 <div className="text-xs text-primary mt-2 flex items-center gap-2">
                   <Loader2 className="w-3 h-3 animate-spin" />
                   Processing payment...
                 </div>
               )}
-              {isPlaying && (
-                <Button 
-                  size="sm" 
-                  variant="destructive" 
-                  className="w-full mt-2"
-                  onClick={() => setIsPlaying(false)}
-                  disabled={isProcessingPayment}
-                >
-                  {isProcessingPayment ? 'Processing...' : 'Pause Payment'}
-                </Button>
+              {paymentError && (
+                <div className="text-xs text-red-400 mt-2">
+                  Error: {paymentError}
+                </div>
+              )}
+              {!hasContentAccess && !isCheckingAccess && (
+                <div className="text-xs text-yellow-400 mt-2">
+                  ⚠️ Purchase access to watch
+                </div>
               )}
             </div>
 

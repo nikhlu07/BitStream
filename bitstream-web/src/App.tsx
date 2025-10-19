@@ -11,36 +11,38 @@ import Dashboard from "./pages/Dashboard";
 import Content from "./pages/dashboard/Content";
 import Analytics from "./pages/dashboard/Analytics";
 import Wallet from "./pages/Wallet";
+import StreamingDemo from "./pages/StreamingDemo";
 import NotFound from "./pages/NotFound";
 import { WalletProvider } from "@/contexts/WalletContext";
-import { Providers } from "@/providers/TurnkeyProvider";
-import { TurnkeyWalletCreator } from "@/components/TurnkeyWalletCreator";
+import ContractTest from "./components/ContractTest";
+
+import "./index.css";
+
 
 const App = () => (
-  <Providers>
-    <TooltipProvider>
-      <WalletProvider>
-        <TurnkeyWalletCreator />
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/browse" element={<Browse />} />
-            <Route path="/watch/:contentId" element={<Watch />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/dashboard/content" element={<Content />} />
-            <Route path="/dashboard/analytics" element={<Analytics />} />
-            <Route path="/wallet" element={<Wallet />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </WalletProvider>
-    </TooltipProvider>
-  </Providers>
+  <TooltipProvider>
+    <WalletProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/browse" element={<Browse />} />
+          <Route path="/watch/:contentId" element={<Watch />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/content" element={<Content />} />
+          <Route path="/dashboard/analytics" element={<Analytics />} />
+          <Route path="/wallet" element={<Wallet />} />
+          <Route path="/streaming" element={<StreamingDemo />} />
+          <Route path="/test-contracts" element={<ContractTest />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </WalletProvider>
+  </TooltipProvider>
 );
 
 export default App;

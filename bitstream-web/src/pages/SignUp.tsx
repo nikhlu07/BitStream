@@ -8,14 +8,17 @@ import { Card } from "@/components/ui/card";
 import { Zap, Mail, User, CheckCircle2, Eye, Video, Wallet as WalletIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
-import { useTurnkeyWallet } from "@/hooks/useTurnkeyWallet";
+import { useStacksWallet } from "@/hooks/useStacksWallet";
+import { useContractInteraction } from "@/hooks/useContractInteraction";
+
 
 export default function SignUp() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createUserWallet, isLoading: walletLoading } = useWallet();
-  const { connectTurnkey, address, isLoading: turnkeyLoading } = useTurnkeyWallet();
+  const { connectWallet, address, isLoading: stacksLoading } = useStacksWallet();
+  const { network, error: contractError, clearError } = useContractInteraction();
   
   const [accountType, setAccountType] = useState<"creator" | "viewer">(
     (searchParams.get("type") as "creator" | "viewer") || "viewer"
@@ -25,26 +28,30 @@ export default function SignUp() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [pendingUserData, setPendingUserData] = useState<{email: string, username: string} | null>(null);
-  
-  const isLoading = isCreating || walletLoading || turnkeyLoading;
 
-  // When Turnkey address is received and we have pending user data, create the user
+  
+  const isLoading = isCreating || walletLoading || stacksLoading;
+
+  // When Stacks address is received and we have pending user data, create the user
   useEffect(() => {
-    if (address && address !== 'PENDING_WALLET_CREATION' && address !== 'PENDING_CONNECTION' && pendingUserData) {
-      console.log('✅ Got Turnkey address, creating user:', address);
+    if (address && pendingUserData) {
+      console.log('✅ Got Stacks address, creating user:', address);
       finishSignup(pendingUserData.email, pendingUserData.username, address);
     }
   }, [address, pendingUserData]);
 
   const finishSignup = async (email: string, username: string, walletAddress: string) => {
     try {
-      // Create user with real Stacks address from Turnkey
+      // Create user with real Stacks address from wallet
       const result = await createUserWallet(email, username, walletAddress);
       
       if (result.success) {
+        // Clear any contract errors
+        clearError();
+        
         toast({
           title: "Welcome to BitStream!",
-          description: `Your wallet has been created! Address: ${walletAddress.substring(0, 10)}...`,
+          description: `Your wallet has been created! Address: ${walletAddress.substring(0, 10)}... (${network})`,
         });
         
         // Navigate based on account type
@@ -104,20 +111,18 @@ export default function SignUp() {
         ? `viewer_${Math.random().toString(36).substring(2, 8)}` // Auto-generated username
         : username;
       
-      console.log('🚀 Connecting Turnkey wallet for:', userUsername);
+      console.log('🚀 Connecting Stacks wallet for:', userUsername);
       
-      // Store user data and trigger Turnkey authentication
+      // Store user data and trigger Stacks wallet connection
       setPendingUserData({ email: userEmail, username: userUsername });
-      
-      // Trigger Turnkey passkey authentication - this will show the modal
-      await connectTurnkey();
+      connectWallet();
       
       // The useEffect above will complete signup when address is received
     } catch (error) {
       console.error('Error during signup:', error);
       toast({
-        title: "Turnkey Authentication Required",
-        description: "Please complete the passkey authentication to continue",
+        title: "Wallet Connection Required",
+        description: "Please connect your Stacks wallet to continue",
         variant: "destructive",
       });
       setIsCreating(false);
@@ -235,13 +240,18 @@ export default function SignUp() {
                 </div>
 
                 <Card className="p-4 bg-muted/50">
-                  <h3 className="font-semibold mb-2">Secure Your Account</h3>
+                  <h3 className="font-semibold mb-2">Connect Your Wallet</h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    We'll create a secure passkey for your device
+                    We'll connect your Stacks wallet to create your account on {network}
                   </p>
                   <div className="bg-primary/10 p-3 rounded-lg text-sm">
-                    🔐 Your passkey is stored securely on your device. No passwords to remember!
+                    🔗 Connect with Hiro Wallet, Xverse, or any Stacks-compatible wallet
                   </div>
+                  {contractError && (
+                    <div className="bg-destructive/10 p-3 rounded-lg text-sm text-destructive mt-2">
+                      ⚠️ {contractError.userMessage}
+                    </div>
+                  )}
                 </Card>
 
                 <div className="flex items-start gap-2">
@@ -263,7 +273,7 @@ export default function SignUp() {
                 </div>
 
                 <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                  {isLoading ? "Creating Account..." : "Create Account & Generate Wallet"}
+                  {isLoading ? "Connecting Wallet..." : "Create Account & Connect Wallet"}
                 </Button>
               </>
             ) : (
@@ -356,11 +366,13 @@ export default function SignUp() {
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              🔒 Your wallet and keys are generated securely using Turnkey's infrastructure
+              🔒 Your wallet remains in your control. We never store your private keys.
             </p>
           </form>
         </Card>
       </div>
+
+
     </div>
   );
 }
