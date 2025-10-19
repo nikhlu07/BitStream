@@ -33,7 +33,7 @@ BitStream leverages **sBTC** on Stacks and **Turnkey's embedded wallets** to cre
 - Zero crypto complexity—sign up with email/passkey
 - Perfect for exclusive content creators who value privacy and safety
 
-## ✨ Key Features
+## ✨ Key Features 
 
 ### For Users
 - **Anonymous Access**: Watch exclusive content without revealing identity
