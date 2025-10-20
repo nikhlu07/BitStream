@@ -350,6 +350,7 @@ const StreamingDashboard: React.FC = () => {
           <p>• <strong>Persistence:</strong> Secure scores survive page refreshes</p>
           <p>• <strong>Reset:</strong> Clears both current and secure scores</p>
         </div>
+      </div>
         </TabsContent>
       </Tabs>
     </div>
