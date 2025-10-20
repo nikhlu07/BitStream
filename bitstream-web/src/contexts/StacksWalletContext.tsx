@@ -14,8 +14,7 @@ import {
   AppConfig
 } from '@stacks/connect';
 import { 
-  StacksTestnet, 
-  StacksMainnet 
+  STACKS_TESTNET
 } from '@stacks/network';
 import {
   uintCV,
@@ -68,7 +67,7 @@ export const StacksWalletProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const network = getCurrentNetwork() === 'mainnet' ? new StacksMainnet() : new StacksTestnet();
+  const network = STACKS_TESTNET; // For now, only support testnet
   const isConnected = userData !== null;
 
   // Check if user is already signed in on mount
@@ -76,7 +75,7 @@ export const StacksWalletProvider: React.FC<{ children: ReactNode }> = ({ childr
     if (userSession.isUserSignedIn()) {
       const userData = userSession.loadUserData();
       setUserData(userData);
-      setAddress(userData.profile.stxAddress.testnet || userData.profile.stxAddress.mainnet);
+      setAddress(userData.profile.stxAddress.testnet);
       console.log('✅ User already connected:', userData.profile.stxAddress);
     }
   }, [userSession]);
@@ -102,9 +101,7 @@ export const StacksWalletProvider: React.FC<{ children: ReactNode }> = ({ childr
         onFinish: () => {
           const userData = userSession.loadUserData();
           setUserData(userData);
-          const userAddress = getCurrentNetwork() === 'mainnet' 
-            ? userData.profile.stxAddress.mainnet 
-            : userData.profile.stxAddress.testnet;
+          const userAddress = userData.profile.stxAddress.testnet;
           setAddress(userAddress);
           console.log('✅ Wallet connected:', userAddress);
         },
@@ -141,9 +138,7 @@ export const StacksWalletProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     try {
       setIsLoading(true);
-      const networkConfig = getCurrentNetwork() === 'mainnet' 
-        ? 'https://api.hiro.so' 
-        : 'https://api.testnet.hiro.so';
+      const networkConfig = 'https://api.testnet.hiro.so'; // Only testnet for now
 
       const response = await fetch(`${networkConfig}/extended/v1/address/${address}/balances`);
       

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { showConnect, disconnect, UserSession, AppConfig } from '@stacks/connect';
-import { StacksTestnet } from '@stacks/network';
+import { STACKS_TESTNET } from '@stacks/network';
 
 const appConfig = new AppConfig(['store_write', 'publish_data']);
 const userSession = new UserSession({ appConfig });
